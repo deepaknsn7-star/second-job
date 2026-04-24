@@ -80,8 +80,8 @@ resource "azurerm_storage_account" "deepu_storage5" {
   }
 }
 
-resource "azurerm_storage_account" "deepu_storage6" {
-  name                     = "storagedeep50"
+resource "azurerm_storage_account" "deepu_storage8" {
+  name                     = "storagedeep501"
   resource_group_name      = "rg_daksh21"
   location                 = "east us"
   account_tier             = "Standard"
