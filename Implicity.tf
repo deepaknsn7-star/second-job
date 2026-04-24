@@ -82,7 +82,7 @@ resource "azurerm_storage_account" "deepu_storage5" {
 
 resource "azurerm_storage_account" "deepu_storage6" {
   name                     = "storagedeep50"
-  resource_group_name      = azurerm_storage_account.deep_storage1.name
+  resource_group_name      = "rg_daksh21"
   location                 = "east us"
   account_tier             = "Standard"
   account_replication_type = "ZRS"
