@@ -1,13 +1,112 @@
-trigger: non
+trigger: none
 
 pool:
-  name: ubuntu-latest
+  name: new agent
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+variables:
+  tfVersion: 'latest'
+  serviceConnection: '2nd service connection'
+  backendRG: 'rg_deepak'
+  backendStorage: 'deepakstoragepip'
+  backendContainer: 'gitdemo'
+  backendKey: 'secondday.tfstate'
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+stages:
+
+# ---------------- INIT ----------------
+- stage: Init
+  displayName: "Terraform Init"
+  jobs:
+  - job: init_job
+    steps:
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: $(tfVersion)
+
+    - task: TerraformTask@5
+      displayName: "Init"
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        backendServiceArm: $(serviceConnection)
+        backendAzureRmResourceGroupName: $(backendRG)
+        backendAzureRmStorageAccountName: $(backendStorage)
+        backendAzureRmContainerName: $(backendContainer)
+        backendAzureRmKey: $(backendKey)
+
+# ---------------- VALIDATE ----------------
+- stage: Validate
+  displayName: "Terraform Validate"
+  dependsOn: Init
+  jobs:
+  - job: validate_job
+    steps:
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: $(tfVersion)
+
+    - task: TerraformTask@5
+      displayName: "Validate"
+      inputs:
+        provider: 'azurerm'
+        command: 'validate'
+
+# ---------------- PLAN ----------------
+- stage: Plan
+  displayName: "Terraform Plan"
+  dependsOn: Validate
+  jobs:
+  - job: plan_job
+    steps:
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: $(tfVersion)
+
+    - task: TerraformTask@5
+      displayName: "Init (again)"
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        backendServiceArm: $(serviceConnection)
+        backendAzureRmResourceGroupName: $(backendRG)
+        backendAzureRmStorageAccountName: $(backendStorage)
+        backendAzureRmContainerName: $(backendContainer)
+        backendAzureRmKey: $(backendKey)
+
+    - task: TerraformTask@5
+      displayName: "Plan"
+      inputs:
+        provider: 'azurerm'
+        command: 'plan'
+        environmentServiceNameAzureRM: $(serviceConnection)
+
+# ---------------- APPLY ----------------
+- stage: Apply
+  displayName: "Terraform Apply (Auto Approve)"
+  dependsOn: Plan
+  condition: succeeded()
+  jobs:
+  - job: apply_job
+    steps:
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: $(tfVersion)
+
+    - task: TerraformTask@5
+      displayName: "Init (again)"
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        backendServiceArm: $(serviceConnection)
+        backendAzureRmResourceGroupName: $(backendRG)
+        backendAzureRmStorageAccountName: $(backendStorage)
+        backendAzureRmContainerName: $(backendContainer)
+        backendAzureRmKey: $(backendKey)
+
+    - task: TerraformTask@5
+      displayName: "Apply Auto Approve"
+      inputs:
+        provider: 'azurerm'
+        command: 'apply'
+        environmentServiceNameAzureRM: $(serviceConnection)
+        args: '-auto-approve'
