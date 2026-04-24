@@ -41,9 +41,21 @@ stages:
   jobs:
   - job: validate_job
     steps:
+
     - task: TerraformInstaller@1
       inputs:
         terraformVersion: $(tfVersion)
+
+    - task: TerraformTask@5
+      displayName: "Init (Required)"
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        backendServiceArm: $(serviceConnection)
+        backendAzureRmResourceGroupName: $(backendRG)
+        backendAzureRmStorageAccountName: $(backendStorage)
+        backendAzureRmContainerName: $(backendContainer)
+        backendAzureRmKey: $(backendKey)
 
     - task: TerraformTask@5
       displayName: "Validate"
